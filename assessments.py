@@ -1,17 +1,14 @@
-# assessments.py
 import tkinter as tk
 from tkinter import messagebox
-
+import components
 
 ROW_BG_1 = "#eeeeee"
 ROW_BG_2 = "#e0e0e0"
-CELL_BORDER = "#b3b3b3"
 
 DARK_GREY = "#727272"
 LIGHT_GREY = "#b3b3b3"
 TEXT_FONT = ("Segoe UI", 11)
 
-# --------- Likert-schaal: 1 t/m 5 ---------
 LIKERT_OPTIONS = [
     ("1", "Oneens"),
     ("2", "Deels oneens"),
@@ -20,7 +17,6 @@ LIKERT_OPTIONS = [
     ("5", "Volledig eens"),
 ]
 
-# --------- Big Five items (25 t/m 50) ---------
 BIG_FIVE_ITEMS = [
     (1, "Ik ben het middelpunt van het feest."),
     (2, "Ik voel me weinig bezorgd om anderen."),
@@ -74,7 +70,6 @@ BIG_FIVE_ITEMS = [
     (50, "Ik zit vol met ideeën."),
 ]
 
-# Test functie Opslaan/Verder
 def get_assessment_results(parent_frame: tk.Frame) -> dict:
     """
     Haal alle ingevulde antwoorden op uit parent_frame.assessment_vars.
@@ -104,7 +99,6 @@ def make_likert_row(parent: tk.Frame, nummer: int, stelling: str, var: tk.String
     # zorg dat kolom 2 (stelling) meerekt, zodat kolom 3 altijd rechts zit
     row.grid_columnconfigure(1, weight=1)
 
-    # --------- Nummer --------- (links, geel zoals in Excel)
     num_label = tk.Label(
         row,
         text=str(nummer),
@@ -112,11 +106,10 @@ def make_likert_row(parent: tk.Frame, nummer: int, stelling: str, var: tk.String
         bg="#f1c40f",
         fg="black",
         font=("Segoe UI", 10, "bold"),
-        anchor="c",
+        anchor="center",
     )
     num_label.grid(row=0, column=0, padx=(10, 10), sticky="w")
 
-    # --------- Stelling---------
     stmt_label = tk.Label(
         row,
         text=stelling,
@@ -129,7 +122,6 @@ def make_likert_row(parent: tk.Frame, nummer: int, stelling: str, var: tk.String
     )
     stmt_label.grid(row=0, column=1, sticky="w", padx=10, pady=8)
 
-    # --------- Likert-knoppen 1..5 --------- (helemaal rechts)
     likert_frame = tk.Frame(row, bg=LIGHT_GREY)
     likert_frame.grid(row=0, column=2, padx=20, pady=8, sticky="e")
 
@@ -164,7 +156,6 @@ def make_likert_row(parent: tk.Frame, nummer: int, stelling: str, var: tk.String
         btn.bind("<Button-1>", on_click)
         buttons.append((value, btn))
 
-    # start met alles "uit"
     update_buttons()
 
 def build_assessments_page(parent_frame: tk.Frame, on_next_page) -> None: #test#
@@ -172,7 +163,6 @@ def build_assessments_page(parent_frame: tk.Frame, on_next_page) -> None: #test#
 
     clear_frame(parent_frame)
 
-    # ---------- scrollbare container ----------
     container = tk.Frame(parent_frame, bg="white")
     container.pack(fill="both", expand=True)
 
@@ -200,7 +190,6 @@ def build_assessments_page(parent_frame: tk.Frame, on_next_page) -> None: #test#
 
     canvas.bind_all("<MouseWheel>", on_mousewheel)
 
-    # ---------- titel & uitleg ----------
     title = tk.Label(
         scroll_frame,
         text="Fase 1.1 – Big Five persoonlijkheidsdimensies",
@@ -225,59 +214,24 @@ def build_assessments_page(parent_frame: tk.Frame, on_next_page) -> None: #test#
     )
     subtitle.pack(fill="x", padx=20, pady=(0, 15))
 
-    # ---------- kolomkoppen ----------
     header = tk.Frame(scroll_frame, bg=DARK_GREY)
     header.pack(fill="x")
 
-    tk.Label(
-        header,
-        text="Nummer",
-        bg=DARK_GREY,
-        fg="white",
-        font=("Segoe UI", 10, "bold"),
-        width=8,
-        anchor="w",
-        padx=10,
-    ).grid(row=0, column=0, sticky="w")
-
-    tk.Label(
-        header,
-        text="Stelling",
-        bg=DARK_GREY,
-        fg="white",
-        font=("Segoe UI", 10, "bold"),
-        anchor="w",
-        padx=10,
-    ).grid(row=0, column=1, sticky="w")
-
-    tk.Label(
-        header,
-        bg=DARK_GREY,
-        fg="white",
-        font=("Segoe UI", 10, "bold"),
-        anchor="e",
-        padx=40,
-    ).grid(row=0, column=2, sticky="e")
-
-    # ---------- alle items ----------
-    parent_frame.assessment_vars = {}
+    parent_frame.assessment_vars = {}  # type: ignore
 
     questions_container = tk.Frame(scroll_frame, bg="white")
     questions_container.pack(fill="both", expand=True)
 
     for nummer, tekst in BIG_FIVE_ITEMS:
         var = tk.StringVar(value="")
-        parent_frame.assessment_vars[nummer] = var
+        parent_frame.assessment_vars[nummer] = var  # type: ignore
         make_likert_row(questions_container, nummer, tekst, var)
 
-    # kleine spacer
     tk.Frame(scroll_frame, bg="white", height=10).pack(fill="x")
 
-    # ---------- Opslaan en verder-knop ----------
     def on_submit():
         results = get_assessment_results(parent_frame)
 
-        # check of er nog lege antwoorden zijn
         missing = [nr for nr, v in results.items() if v is None]
         if missing:
             messagebox.showwarning(
@@ -286,12 +240,32 @@ def build_assessments_page(parent_frame: tk.Frame, on_next_page) -> None: #test#
             )
             return
 
-        # alles ingevuld → ga naar de volgende fase
+        # Write answers to a copy of the Excel template
+        save_path = components.write_assessment_answers_to_excel(results)
+        if save_path:
+            messagebox.showinfo("Opgeslagen", f"Antwoorden opgeslagen in:\n{save_path}")
+        else:
+            messagebox.showerror("Fout", "Kon niet naar Excel schrijven.")
+            return
+
         on_next_page()
 
 
     btn_frame = tk.Frame(scroll_frame, bg="white")
     btn_frame.pack(fill="x", pady=(5, 20))
+
+    # Direct 'next' button (go to next page without running validation)
+    btn_next = tk.Button(
+        btn_frame,
+        text="Volgende",
+        bg="#6c757d",
+        fg="white",
+        font=("Segoe UI", 11, "bold"),
+        padx=20,
+        pady=5,
+        command=on_next_page,
+    )
+    btn_next.pack(side="right", padx=(0, 10))
 
     btn_submit = tk.Button(
         btn_frame,
@@ -305,17 +279,13 @@ def build_assessments_page(parent_frame: tk.Frame, on_next_page) -> None: #test#
     )
     btn_submit.pack(side="right", padx=30)
 
-    # extra ruimte onderaan
     tk.Frame(scroll_frame, bg="white", height=30).pack(fill="x")
 
 
 
 # ----------------------------- FASE 2.0 - Loopbaanankers -----------------------------
 
-# Kleuren voor de tabel
-ROW_BG_1 = "#eeeeee"
-ROW_BG_2 = "#e0e0e0"
-
+# (table color vars `ROW_BG_1` / `ROW_BG_2` are defined at the top)
 # --------- Fase 2.0 – Loopbaanankers: data uit Excel ---------
 # Elke entry: (vraagnummer, anker-letter, stelling-tekst)
 # Ankers: V = Omhoog komen, W = Veilig voelen, X = Vrij zijn, Y = Balans vinden, Z = Uitdaging zoeken
@@ -526,7 +496,7 @@ def build_loopbaanankers_page(parent_frame: tk.Frame) -> None:
                 bg="#f1c40f",
                 fg="black",
                 font=("Segoe UI", 10, "bold"),
-                anchor="c",
+                anchor="center",
             )
             num_label.grid(
                 row=row_index,
@@ -605,7 +575,7 @@ def build_loopbaanankers_page(parent_frame: tk.Frame) -> None:
         update_row(rid)
 
     # Bewaar alle keuzes voor latere scoreberekening
-    parent_frame.loopbaan_vars = vraag_vars
+    parent_frame.loopbaan_vars = vraag_vars  # type: ignore
 
     # =================== Totaal-score rij (placeholders) ===================
     total_frame = tk.Frame(scroll_frame, bg="white")
@@ -644,7 +614,7 @@ def build_loopbaanankers_page(parent_frame: tk.Frame) -> None:
         width=15,
     ).grid(row=0, column=0, sticky="nsew")
 
-    parent_frame.total_labels = {}
+    parent_frame.total_labels = {}  # type: ignore
     for i, key in enumerate(["V", "W", "X", "Y", "Z"], start=1):
         lbl = tk.Label(
             total_row,
@@ -656,7 +626,7 @@ def build_loopbaanankers_page(parent_frame: tk.Frame) -> None:
             width=8,
         )
         lbl.grid(row=0, column=i, sticky="nsew", padx=1)
-        parent_frame.total_labels[key] = lbl
+        parent_frame.total_labels[key] = lbl  # type: ignore
 
     # =================== Score-interpretatie ===================
     score_box = tk.Frame(scroll_frame, bg="white")
@@ -722,10 +692,9 @@ def build_loopbaanankers_page(parent_frame: tk.Frame) -> None:
             pady=6,
         ).pack(side="left", fill="both", expand=True)
 
-
-    # =================== Opslaan en verder-knop ===================
+    # =================== Opslaan-knop ===================
     def on_submit_loopbaan():
-        # 1. Controle: elke rij moet een keuze hebben
+        # Controle: elke rij moet een keuze hebben
         missing = [row_id for row_id, v in parent_frame.loopbaan_vars.items() if not v.get()]
         if missing:
             messagebox.showwarning(
@@ -734,24 +703,18 @@ def build_loopbaanankers_page(parent_frame: tk.Frame) -> None:
             )
             return
 
-        # 2. Resultaten bewaren op het parent_frame (handig voor later export)
-        parent_frame.loopbaan_results = {
-            row_id: v.get() for row_id, v in parent_frame.loopbaan_vars.items()
-        }
-
-        # 3. Rechterpaneel leegmaken
-        clear_frame(parent_frame)
-
-        # 4. FASE 2.1 – Carrièreclusters laden in hetzelfde paneel
-        frame_21 = create_carriere_clusters_frame(parent_frame)
-        frame_21.pack(fill="both", expand=True)
+        messagebox.showinfo(
+            "Opgeslagen",
+            "De keuzes voor de loopbaanankers zijn opgeslagen.\n"
+            "(Scoreberekening komt daarna.)"
+        )
 
     btn_frame = tk.Frame(scroll_frame, bg="white")
     btn_frame.pack(fill="x", pady=(5, 20))
 
     btn_submit = tk.Button(
         btn_frame,
-        text="Opslaan en verder",
+        text="Opslaan",
         bg="#4d4d4d",
         fg="white",
         font=("Segoe UI", 11, "bold"),
@@ -764,344 +727,3 @@ def build_loopbaanankers_page(parent_frame: tk.Frame) -> None:
 
 
 # ----------------------------- FASE 2.1 - Carriere Clusters  -----------------------------
-
-
-# ------------------------ FASE 2.1 - Carriere Clusters ------------------------
-
-# Data voor de 16 carrièreclusters (segment + korte omschrijving)
-CARRIERE_CLUSTERS = [
-    {
-        "id": 1,
-        "segment": "Landbouw, voeding en natuurlijke grondstoffen",
-        "omschrijving": (
-            "Productie, verwerking en ontwikkeling van agrarische grondstoffen, "
-            "voedsel en natuurlijke hulpbronnen."
-        ),
-    },
-    {
-        "id": 2,
-        "segment": "Architectuur en constructie",
-        "omschrijving": (
-            "Ontwerpen, plannen, bouwen en onderhouden van de gebouwde omgeving."
-        ),
-    },
-    {
-        "id": 3,
-        "segment": "Kunst, audio-visuele technologie en communicatie",
-        "omschrijving": (
-            "Ontwerpen, produceren en presenteren van multimedia, podiumkunsten "
-            "en andere creatieve content."
-        ),
-    },
-    {
-        "id": 4,
-        "segment": "Business Management en administratie",
-        "omschrijving": (
-            "Plannen, organiseren en aansturen van zakelijke processen en "
-            "administratieve activiteiten."
-        ),
-    },
-    {
-        "id": 5,
-        "segment": "Educatie en training",
-        "omschrijving": (
-            "Plannen, verzorgen en ondersteunen van onderwijs- en "
-            "opleidingsactiviteiten."
-        ),
-    },
-    {
-        "id": 6,
-        "segment": "Financiën",
-        "omschrijving": (
-            "Financiële planning, investeringen, bankwezen, verzekeringen en "
-            "bedrijfseconomische dienstverlening."
-        ),
-    },
-    {
-        "id": 7,
-        "segment": "Overheid en publieke administratie",
-        "omschrijving": (
-            "Uitvoering van overheidstaken zoals beleid, regelgeving, belastingen "
-            "en publieke administratie."
-        ),
-    },
-    {
-        "id": 8,
-        "segment": "Gezondheidswetenschappen",
-        "omschrijving": (
-            "Therapeutische, diagnostische en ondersteunende zorg, inclusief "
-            "biotechnologisch onderzoek."
-        ),
-    },
-    {
-        "id": 9,
-        "segment": "Hospitality en toerisme",
-        "omschrijving": (
-            "Management en uitvoering in horeca, logies, recreatie en toeristische "
-            "diensten."
-        ),
-    },
-    {
-        "id": 10,
-        "segment": "Humanitaire dienstverlening",
-        "omschrijving": (
-            "Ondersteunen van mensen en gezinnen via sociale, maatschappelijke en "
-            "vrijwilligersdiensten."
-        ),
-    },
-    {
-        "id": 11,
-        "segment": "ICT",
-        "omschrijving": (
-            "Ontwikkeling, beheer en ondersteuning van hardware, software, "
-            "netwerken en digitale media."
-        ),
-    },
-    {
-        "id": 12,
-        "segment": "Publieke veiligheid en zekerheid",
-        "omschrijving": (
-            "Handhaving, crisisbeheersing en bescherming van publieke orde en "
-            "veiligheid."
-        ),
-    },
-    {
-        "id": 13,
-        "segment": "Fabricage",
-        "omschrijving": (
-            "Verwerking van materialen tot producten, inclusief onderhoud en "
-            "procesbeheersing."
-        ),
-    },
-    {
-        "id": 14,
-        "segment": "Marketing, sales en service",
-        "omschrijving": (
-            "Marketingactiviteiten, verkoop en dienstverlening om "
-            "organisatorische doelen te bereiken."
-        ),
-    },
-    {
-        "id": 15,
-        "segment": "Wetenschap, technologie, engineering en mathematica",
-        "omschrijving": (
-            "Onderzoek, experimenten en technische ontwikkeling in natuur- en "
-            "technische wetenschappen."
-        ),
-    },
-    {
-        "id": 16,
-        "segment": "Transport, distributie en logistiek",
-        "omschrijving": (
-            "Planning en uitvoering van vervoer en distributie van mensen en goederen."
-        ),
-    },
-]
-
-# Hierin bewaren we de IntVar’s zodat je ze later kunt uitlezen / opslaan
-carriere_cluster_vars = []  # wordt gevuld in create_carriere_clusters_frame()
-
-
-def _maak_totaal_callback(var_act, var_comp, var_edu, var_tot):
-    """Interne helper: zorgt dat totaalscore automatisch wordt bijgewerkt."""
-    def _update(*_):
-        try:
-            totaal = var_act.get() + var_comp.get() + var_edu.get()
-        except tk.TclError:
-            totaal = 0
-        var_tot.set(totaal)
-
-    return _update
-
-
-def create_carriere_clusters_frame(parent):
-    """
-    Maakt het formulier voor FASE 2.1 – Carrière Clusters.
-
-    Gebruik in app.py bijvoorbeeld:
-        frame_fase21 = assessments.create_carriere_clusters_frame(main_container)
-    """
-    global carriere_cluster_vars
-    carriere_cluster_vars = []
-
-    frame = tk.Frame(parent, bg="#ffffff")
-
-    title = tk.Label(
-        frame,
-        text="FASE 2.1 – Carrièreclusters",
-        font=("Segoe UI", 14, "bold"),
-        bg="#ffffff",
-        fg="#000000",
-    )
-    title.pack(anchor="w", padx=20, pady=(15, 5))
-
-    subtitle = tk.Label(
-        frame,
-        text=(
-            "Scoor per cluster hoeveel de cliënt zich herkent in de activiteiten, "
-            "competenties en educatieve onderwerpen. "
-            "(0 = niet passend, hoger = meer passend)"
-        ),
-        font=("Segoe UI", 9),
-        bg="#ffffff",
-        fg="#333333",
-        wraplength=900,
-        justify="left",
-    )
-    subtitle.pack(anchor="w", padx=20, pady=(0, 10))
-
-    table = tk.Frame(frame, bg="#ffffff")
-    table.pack(fill="both", expand=True, padx=20, pady=(0, 20))
-
-    # Kolomtitels
-    headers = [
-        "Cluster",
-        "Segment",
-        "Score activiteiten\n(max. 7)",
-        "Score competenties\n(max. 5)",
-        "Score educatieve onderwerpen\n(max. 5)",
-        "Totaalscore",
-    ]
-
-    for col, text in enumerate(headers):
-        lbl = tk.Label(
-            table,
-            text=text,
-            font=("Segoe UI", 9, "bold"),
-            bg="#f3f4f6",
-            fg="#111827",
-            bd=1,
-            relief="solid",
-            padx=5,
-            pady=5,
-            justify="center",
-        )
-        lbl.grid(row=0, column=col, sticky="nsew")
-
-    # Zorg dat alle kolommen mee-resizen
-    for col in range(len(headers)):
-        table.grid_columnconfigure(col, weight=1)
-
-    # Rijen voor de 16 clusters
-    for r, cluster in enumerate(CARRIERE_CLUSTERS, start=1):
-        # Label: cluster nummer
-        lbl_id = tk.Label(
-            table,
-            text=str(cluster["id"]),
-            font=("Segoe UI", 9, "bold"),
-            bg="#ffffff",
-            fg="#000000",
-            bd=1,
-            relief="solid",
-            padx=5,
-            pady=3,
-        )
-        lbl_id.grid(row=r, column=0, sticky="nsew")
-
-        # Label: segment + korte omschrijving
-        seg_text = f"{cluster['segment']}\n\n{cluster['omschrijving']}"
-        lbl_seg = tk.Label(
-            table,
-            text=seg_text,
-            font=("Segoe UI", 9),
-            bg="#ffffff",
-            fg="#111827",
-            bd=1,
-            relief="solid",
-            padx=5,
-            pady=3,
-            wraplength=350,
-            justify="left",
-        )
-        lbl_seg.grid(row=r, column=1, sticky="nsew")
-
-        # IntVar’s voor scores
-        var_act = tk.IntVar(value=0)
-        var_comp = tk.IntVar(value=0)
-        var_edu = tk.IntVar(value=0)
-        var_tot = tk.IntVar(value=0)
-
-        # Spinboxen voor invoer
-        spn_act = tk.Spinbox(
-            table,
-            from_=0,
-            to=7,
-            width=5,
-            textvariable=var_act,
-            font=("Segoe UI", 9),
-            justify="center",
-        )
-        spn_act.grid(row=r, column=2, sticky="nsew")
-
-        spn_comp = tk.Spinbox(
-            table,
-            from_=0,
-            to=5,
-            width=5,
-            textvariable=var_comp,
-            font=("Segoe UI", 9),
-            justify="center",
-        )
-        spn_comp.grid(row=r, column=3, sticky="nsew")
-
-        spn_edu = tk.Spinbox(
-            table,
-            from_=0,
-            to=5,
-            width=5,
-            textvariable=var_edu,
-            font=("Segoe UI", 9),
-            justify="center",
-        )
-        spn_edu.grid(row=r, column=4, sticky="nsew")
-
-        # Totaalscore (alleen-lezen)
-        ent_tot = tk.Entry(
-            table,
-            textvariable=var_tot,
-            font=("Segoe UI", 9, "bold"),
-            justify="center",
-            state="readonly",
-        )
-        ent_tot.grid(row=r, column=5, sticky="nsew")
-
-        # Callback koppelen zodat de totaalscore steeds opnieuw berekend wordt
-        cb = _maak_totaal_callback(var_act, var_comp, var_edu, var_tot)
-        var_act.trace_add("write", cb)
-        var_comp.trace_add("write", cb)
-        var_edu.trace_add("write", cb)
-
-        # Bewaar alles zodat je het later kunt uitlezen
-        carriere_cluster_vars.append(
-            {
-                "id": cluster["id"],
-                "segment": cluster["segment"],
-                "var_activiteiten": var_act,
-                "var_competenties": var_comp,
-                "var_educatief": var_edu,
-                "var_totaal": var_tot,
-            }
-        )
-
-    return frame
-
-
-def get_carriere_clusters_scores():
-    """
-    Geeft de ingevulde scores terug als een lijst dicts.
-    Dit kun je bijv. aanroepen in je on_submit_loopbaan of een aparte
-    on_submit_fase21 functie om alles naar Excel / JSON te schrijven.
-    """
-    resultaten = []
-    for item in carriere_cluster_vars:
-        resultaten.append(
-            {
-                "cluster": item["id"],
-                "segment": item["segment"],
-                "score_activiteiten": item["var_activiteiten"].get(),
-                "score_competenties": item["var_competenties"].get(),
-                "score_educatieve_onderwerpen": item["var_educatief"].get(),
-                "totaal_score": item["var_totaal"].get(),
-            }
-        )
-    return resultaten
