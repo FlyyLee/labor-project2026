@@ -8,7 +8,7 @@ LABOR is a local Python/Tkinter application designed to streamline assessments a
 
 ## Getting started
 
-### Prequisities
+### Prerequisites
 
 Ensure [Python](https://www.python.org/downloads/) is installed on your system.
 
