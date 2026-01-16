@@ -125,7 +125,7 @@ def show_home():
     )
     btn_assessments.grid(row=0, column=0, padx=60, pady=20)
 
-    btn_prognose = tk.Button(
+    btn_prognosis = tk.Button(
         button_frame,
         text="Prognosemodel",
         width=BUTTON_WIDTH,
@@ -135,7 +135,7 @@ def show_home():
         font=BUTTON_FONT,
         command=open_prognosis_model,
     )
-    btn_prognose.grid(row=0, column=1, padx=60, pady=20)
+    btn_prognosis.grid(row=0, column=1, padx=60, pady=20)
 
 def open_career_anchors():
     """Show the Phase 2.0 – Career Anchors page within content."""
@@ -166,7 +166,7 @@ def open_prognosis_model():
     for w in content.winfo_children():
         w.destroy()
 
-    prognosis_model.build_prognose_page(content)
+    prognosis_model.build_prognosis_page(content)
 
 def open_career_clusters():
     """Show the Phase 2.1 – Career Clusters page within content."""

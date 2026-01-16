@@ -1,6 +1,7 @@
 # assessments.py
 import tkinter as tk
 from tkinter import messagebox
+import write_assessments_to_excel
 
 
 ROW_BG_1 = "#eeeeee"
@@ -8,7 +9,7 @@ ROW_BG_2 = "#e0e0e0"
 CELL_BORDER = "#b3b3b3"
 
 DARK_GREY = "#727272"
-LIGHT_GREY = "#b3b3b3"
+LIGHT_GREY = "#eeeeee"
 TEXT_FONT = ("Segoe UI", 11)
 
 # --------- Likert scale: 1–5 ---------
@@ -121,7 +122,7 @@ def make_likert_row(parent: tk.Frame, number: int, stelling: str, var: tk.String
         row,
         text=stelling,
         bg=LIGHT_GREY,
-        fg="white",
+        fg="black",
         font=TEXT_FONT,
         anchor="w",
         justify="left",
@@ -231,7 +232,7 @@ def build_assessments_page(parent_frame: tk.Frame, on_next_page) -> None: #test#
 
     tk.Label(
         header,
-        text="number",
+        text="Nummer",
         bg=DARK_GREY,
         fg="white",
         font=("Segoe UI", 10, "bold"),
@@ -287,6 +288,14 @@ def build_assessments_page(parent_frame: tk.Frame, on_next_page) -> None: #test#
             return
 
         # If everything is filled in, continue to the next page
+                # Write answers to a copy of the Excel template
+        save_path = write_assessments_to_excel.write_assessment_answers_to_excel(results)
+        if save_path:
+            messagebox.showinfo("Opgeslagen", f"Antwoorden opgeslagen in:\n{save_path}")
+        else:
+            messagebox.showerror("Fout", "Kon niet naar Excel schrijven.")
+            return
+
         on_next_page()
 
 
