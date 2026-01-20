@@ -2,6 +2,9 @@
 import tkinter as tk
 from tkinter import ttk
 
+ROW_BG_1 = "#EEEEEE"
+ROW_BG_2 = "#E0E0E0"
+
 # --------- Prognosis model page entry point ---------
 def build_prognosis_page(parent):
     parent.configure(bg="white")
@@ -57,6 +60,11 @@ def build_prognosis_page(parent):
     content = tk.Frame(canvas, bg="#C0C0C0")
     canvas_window = canvas.create_window((0, 0), window=content, anchor="nw")
 
+    def on_canvas_configure(event):
+        canvas.itemconfig(canvas_window, width=event.width)
+    
+    canvas.bind("<Configure>", on_canvas_configure)
+
     def on_configure(event):
         canvas.configure(scrollregion=canvas.bbox("all"))
         canvas.itemconfig(canvas_window, width=event.width)
@@ -67,7 +75,7 @@ def build_prognosis_page(parent):
     section = tk.Label(
         content,
         text="1. Personalia",
-        bg="#727272",
+        bg="#202020",
         fg="white",
         padx=10,
         pady=6,
@@ -98,3 +106,4 @@ def build_prognosis_page(parent):
             width=4,
             bg="F1C40F"
         )
+        
