@@ -21,7 +21,7 @@ LIKERT_OPTIONS = [
     ("5", "Volledig eens"),
 ]
 
-# --------- Big Five items: 25–50 ---------
+# --------- Big Five items ---------
 BIG_FIVE_ITEMS = [
     (1, "Ik ben het middelpunt van het feest."),
     (2, "Ik voel me weinig bezorgd om anderen."),
