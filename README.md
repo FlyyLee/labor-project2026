@@ -1,10 +1,28 @@
 # LABOR Arbeidsmarktintegratie - Modular Program
-LABOR's modular program is a local Python/Tkinter application designed to streamline assessments and generate prognosis reports. The application allows users to complete various assessments, automatically calculate scores, and produce a clear report with percentages, results, and conclusions. All data is stored locally.
+LABOR's modular program is a local Python/Tkinter application designed to streamline assessments and generate prognosis reports. The application allows users to complete various assessments, automatically calculate scores, and produce a clear report with percentages, results, and conclusions. All data is stored locally within the file explorer.
 
 ## Technologies
-- **Front-end:** Python Tkinter
-- **Back-end:** Python Flask
-- **Database:** SQLite
+
+### Core language
+- Python
+
+### UI framework
+- Tkinter
+- Custom UI component layer `ui_components.py`
+- Centralized styling layer `ui_styles.py`
+
+### Data processing
+- Pandas
+
+### File I/O (Input/Output)
+- OpenPyXL
+- xlrd
+
+### Platform integration
+- pywin32
+
+### Media
+- Pillow
 
 ## Getting started
 
