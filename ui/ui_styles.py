@@ -1,4 +1,6 @@
-# ui_styles.py
+"""
+Centralized Tkinter UI constants for colors, fonts, spacing, and layout styling.
+"""
 
 # --- Colors ---
 # -- Base colors --
@@ -8,6 +10,9 @@ COLOR_WHITE = "#FFFFFF"
 # -- Page colors --
 PAGE_BACKGROUND_COLOR = "#FFFFFF"
 PANEL_BACKGROUND_COLOR = "#F5F5F5"
+
+# -- Sidebar colors --
+SIDEBAR_BACKGROUND_COLOR = "#000000"
 
 # -- Table colors --
 TABLE_HEADER_BACKGROUND_COLOR = "#363636"

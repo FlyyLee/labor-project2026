@@ -1,4 +1,4 @@
-# fase2en2_short.py
+# corporate_culture_research.py
 from __future__ import annotations
 import tkinter as tk
 from tkinter import messagebox
@@ -64,7 +64,11 @@ S = {
     "f_b": ("Segoe UI", 10, "bold"),
 }
 
-# Helpers 
+# ---------- Helpers ----------
+def clear_frame(frame: tk.Widget) -> None:
+    for w in frame.winfo_children():
+        w.destroy()
+
 def scrollable(parent: tk.Widget) -> tuple[tk.Frame, tk.Canvas, tk.Frame]:
     wrap = tk.Frame(parent, bg=S["bg"])
     wrap.pack(fill="both", expand=True)
@@ -78,12 +82,11 @@ def scrollable(parent: tk.Widget) -> tuple[tk.Frame, tk.Canvas, tk.Frame]:
     inner = tk.Frame(c, bg=S["bg"])
     win = c.create_window((0, 0), window=inner, anchor="nw")
 
-    inner.bind("<Configure>", lambda e: c.configure(scrollregion=c.bbox("all")))
+    inner.bind("<Configure>", lambda _e: c.configure(scrollregion=c.bbox("all")))
     c.bind("<Configure>", lambda e: c.itemconfig(win, width=e.width))
     c.bind_all("<MouseWheel>", lambda e: c.yview_scroll(-int(e.delta / 120), "units"))
 
     return wrap, c, inner
-
 
 def make_likert_buttons(parent: tk.Widget, var: tk.StringVar, bg: str) -> tk.Frame:
     f = tk.Frame(parent, bg=bg)
@@ -102,19 +105,27 @@ def make_likert_buttons(parent: tk.Widget, var: tk.StringVar, bg: str) -> tk.Fra
         refresh()
 
     for i, v in enumerate(LIKERT):
-        b = tk.Button(f, text=v, width=3, bd=1, font=S["f"], cursor="hand2",
-                      command=lambda x=v: choose(x), bg=S["btn"])
+        b = tk.Button(
+            f,
+            text=v,
+            width=3,
+            bd=1,
+            font=S["f"],
+            cursor="hand2",
+            command=lambda x=v: choose(x),
+            bg=S["btn"]
+        )
         b.grid(row=0, column=i, padx=3)
         buttons[v] = b
 
     refresh()
     return f
 
-
-# Page 
-class App(tk.Frame):
-    def __init__(self, parent: tk.Widget):
+# ---------- Page ----------
+class Culture22Page(tk.Frame):
+    def __init__(self, parent: tk.Widget, navigate):
         super().__init__(parent, bg=S["bg"])
+        self.navigate = navigate
         self.vars: dict[tuple[int, int], tk.StringVar] = {}
         self.sub_lbl: dict[int, tk.Label] = {}
         self.build()
@@ -133,7 +144,7 @@ class App(tk.Frame):
     def build(self):
         _, _, inner = scrollable(self)
 
-        tk.Label(inner, text="Cultuur | Beoordeling van stellingen (1–5)",
+        tk.Label(inner, text="Fase 2.2 – Cultuur | Beoordeling van stellingen (1–4)",
                  bg=S["bg"], font=S["f_title"], anchor="w").pack(fill="x", padx=20, pady=(15, 5))
         tk.Label(inner, text="Beoordeel elke stelling: 1=oneens … 5=volledig eens.",
                  bg=S["bg"], font=S["f_sub"], anchor="w").pack(fill="x", padx=20, pady=(0, 12))
@@ -163,27 +174,32 @@ class App(tk.Frame):
 
         row_counter = 0
         for g in GROUPS:
-            # group header
             grp = tk.Frame(body, bg=S["yellow"])
             grp.pack(fill="x", pady=(8, 2))
-            tk.Label(grp, text=str(g.id), bg=S["yellow"], font=S["f_b"], width=8).grid(row=0, column=0)
+            tk.Label(grp, text=str(g.id), bg=S["yellow"], font=S["f_b"], width=8)\
+                .grid(row=0, column=0)
             tk.Label(grp, text=g.name, bg=S["yellow"], font=S["f_b"], anchor="w", padx=10)\
                 .grid(row=0, column=1, sticky="w")
 
-            # 4 statements
             for i, stmt in enumerate(g.stmts, start=1):
                 row_counter += 1
                 bg = S["odd"] if row_counter % 2 else S["even"]
+
                 r = tk.Frame(body, bg=bg)
                 r.pack(fill="x", pady=1)
-
-                # make text column stretch => buttons go to far right
                 r.grid_columnconfigure(1, weight=1)
 
                 tk.Label(r, text="", bg=bg, width=8).grid(row=0, column=0, sticky="w")
-                tk.Label(r, text=f"{i}. {stmt}", bg=bg, font=S["f"], anchor="w",
-                         justify="left", wraplength=680, padx=10)\
-                    .grid(row=0, column=1, sticky="w")
+                tk.Label(
+                    r,
+                    text=f"{i}. {stmt}",
+                    bg=bg,
+                    font=S["f"],
+                    anchor="w",
+                    justify="left",
+                    wraplength=680,
+                    padx=10
+                ).grid(row=0, column=1, sticky="w")
 
                 v = tk.StringVar(value="")
                 self.vars[(g.id, i)] = v
@@ -201,6 +217,7 @@ class App(tk.Frame):
             tk.Label(sub, text="Totaal score (4 stellingen)", bg=S["yellow"], font=S["f_b"],
                      anchor="w", padx=10).grid(row=0, column=1, sticky="w")
             tk.Label(sub, text="", bg=S["yellow"], width=22).grid(row=0, column=2)
+
             lbl = tk.Label(sub, text="0", bg=S["yellow"], font=S["f_b"], width=8, anchor="e", padx=10)
             lbl.grid(row=0, column=3, sticky="e")
             self.sub_lbl[g.id] = lbl
@@ -213,31 +230,58 @@ class App(tk.Frame):
             box = tk.Frame(right, bg="#f5f5f5", bd=1, relief="solid")
             box.pack(fill="x", pady=6)
             tk.Label(box, text=g.name, bg=S["yellow"], font=S["f_b"], pady=6).pack(fill="x")
-            tk.Label(box, text=g.desc, bg="#f5f5f5", font=S["f"], wraplength=360,
-                     justify="left", anchor="w", padx=8, pady=8).pack(fill="x")
+            tk.Label(
+                box,
+                text=g.desc,
+                bg="#f5f5f5",
+                font=S["f"],
+                wraplength=360,
+                justify="left",
+                anchor="w",
+                padx=8,
+                pady=8
+            ).pack(fill="x")
 
         # submit
         btn_row = tk.Frame(inner, bg=S["bg"])
         btn_row.pack(fill="x", padx=20, pady=(12, 20))
 
-        tk.Button(btn_row, text="Opslaan en verder", bg=S["btn_on"], fg="white",
-                  font=("Segoe UI", 11, "bold"), padx=20, pady=6, command=self.submit)\
-            .pack(side="right")
+        tk.Button(
+            btn_row,
+            text="Opslaan en verder",
+            bg=S["btn_on"],
+            fg="white",
+            font=("Segoe UI", 11, "bold"),
+            padx=20,
+            pady=6,
+            command=self.submit
+        ).pack(side="right")
 
     def submit(self):
-        missing = [(gid, i) for gid in range(1, 5) for i in range(1, 5) if not self.vars[(gid, i)].get().strip()]
+        missing = [
+            (gid, i)
+            for gid in range(1, 5)
+            for i in range(1, 5)
+            if not self.vars[(gid, i)].get().strip()
+        ]
         if missing:
-            messagebox.showwarning("Onvolledige vragenlijst",
-                                   f"Er zijn nog {len(missing)} stellingen niet ingevuld.")
+            messagebox.showwarning(
+                "Onvolledige vragenlijst",
+                f"Er zijn nog {len(missing)} stellingen niet ingevuld."
+            )
             return
-        totals = "\n".join([f"{g.id}. {g.name}: {self.subtotal(g.id)}" for g in GROUPS])
-        messagebox.showinfo("Resultaat (totaal per cultuur)", totals)
+
+        # resultaten bewaren op het parent frame (voor later export)
+        self.cultuur_results = {k: v.get() for k, v in self.vars.items()}
+        self.cultuur_totals = {g.id: self.subtotal(g.id) for g in GROUPS}
+
+        # Ga door naar volgende stap (pas aan naar jouw router)
+        # Bijvoorbeeld: self.navigate("phase2.3")
+        self.navigate("home")
 
 
-if __name__ == "__main__":
-    root = tk.Tk()
-    root.title("Cultuur – vragenlijst (kort) met subtotal per 4 stellingen")
-    root.geometry("1400x750")
-
-    App(root).pack(fill="both", expand=True)
-    root.mainloop()
+# -------------------- BUILDER FUNCTION --------------------
+def build_cultuur_page(parent_frame: tk.Frame, navigate) -> None:
+    clear_frame(parent_frame)
+    page = Culture22Page(parent_frame, navigate)
+    page.pack(fill="both", expand=True)
